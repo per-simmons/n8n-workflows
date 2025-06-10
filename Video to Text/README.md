@@ -1,6 +1,6 @@
-# Video to Text Transcription Workflow
+# Video to Text with ElevenLabs
 
-Transform your video content into searchable, editable text with this automated transcription workflow. Seamlessly process MP4 videos from Google Drive using advanced speech-to-text technology, creating organized Google Docs for easy access and sharing.
+This workflow is a lifesaver if you have a bunch of videos that need transcribing. It automatically grabs MP4s from your Google Drive, runs them through ElevenLabs' speech-to-text API, and saves the transcripts as Google Docs. No more manual transcription!
 
 ## Prerequisites
 
@@ -21,12 +21,12 @@ Transform your video content into searchable, editable text with this automated 
 
 ## How It Works
 
-1. **Trigger**: Workflow starts manually when clicking "Test workflow"
-2. **Find Videos**: Searches for MP4 files in the specified Google Drive folder (limited to 10 files)
-3. **Download**: Downloads each MP4 file
-4. **Transcribe**: Sends the video to ElevenLabs API for transcription
-5. **Create Document**: Creates a new Google Doc with naming format "Transcript-[filename]"
-6. **Write Content**: Inserts the transcription text into the Google Doc
+1. **Trigger**: Just click "Test workflow" to start
+2. **Find Videos**: Looks for MP4 files in your specified Google Drive folder (processes up to 10 at a time)
+3. **Download**: Grabs each video file
+4. **Transcribe**: Sends it to ElevenLabs for transcription
+5. **Create Document**: Makes a new Google Doc named "Transcript-[your video name]"
+6. **Write Content**: Dumps the transcription into the doc
 
 ## Workflow Diagram
 
@@ -43,13 +43,9 @@ graph TD
     style F fill:#bfb,stroke:#333,stroke-width:2px
 ```
 
-## Notes
+## Good to Know
 
-- Files are processed sequentially
-- Transcription quality depends on ElevenLabs' speech recognition capabilities
-- The document title automatically removes the .mp4 extension from the original filename
-
-## Getting Started
-
-Ready to automate your video transcription process? Begin your automation journey:
-[Explore n8n](https://n8n.io/)
+- Videos are processed one at a time (not in parallel)
+- Transcription quality is pretty good, but depends on audio clarity
+- The workflow automatically strips the .mp4 extension from doc titles so they look cleaner
+- ElevenLabs handles most accents pretty well
