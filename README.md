@@ -1,7 +1,5 @@
 # n8n Workflows
 
-Hey! These are some n8n workflows I've been working on. They've saved me tons of time, so I figured I'd share them.
-
 ## What's in here?
 
 Each folder has a complete workflow - just grab the JSON file and import it into your n8n instance. Everything's documented so you know what's what.
