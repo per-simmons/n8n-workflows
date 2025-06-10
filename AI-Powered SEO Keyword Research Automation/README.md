@@ -6,7 +6,7 @@ tags:
 
 # AI-Powered SEO Keyword Research Workflow
 
-Okay, so this workflow basically does all your keyword research for you. It's pretty cool - you throw in a topic, and it spits out a complete keyword strategy with search volumes, difficulty scores, competitor analysis, the works.
+This is one part of a larger content rearch / SEO workflow I built for a client. It's incredibly effective for automating keyword research: you throw in a topic, it analyzes potential keywords, it outputs a complete keyword strategy with search volumes, difficulty scores, competitor analysis, etc.
 
 ![Workflow Overview](./screenshots/workflow.png)
 
