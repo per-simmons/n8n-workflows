@@ -7,7 +7,7 @@ Each folder has a complete workflow - just grab the JSON file and import it into
 ## The Workflows
 
 ### 🔗 [Link Capture System](Link%20Capture%20System/README.md)
-This one's pretty neat - it grabs links from Telegram, uses AI to figure out what they're about, and dumps everything into Airtable. I use it to save interesting stuff I find without having to manually organize everything.
+This automation grabs links from Telegram, uses AI to figure out what they're about, and dumps everything into Airtable. I use it to save interesting stuff I find without having to manually organize everything.
 
 ### 🎥 [Video to Text](Video%20to%20Text/README.md)
 Super simple but super useful. Takes videos from Google Drive and transcribes them using ElevenLabs. Great if you record meetings or make video notes and want them searchable.
