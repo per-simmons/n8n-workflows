@@ -1,0 +1,81 @@
+{
+  "name": "LinkedIn Commenter Sales Enrichment",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "d3411584-66f4-42f1-8e6c-1d717fbc88f1",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [176, 704]
+    },
+    {
+      "parameters": {
+        "operation": "Run actor and get dataset",
+        "actorId": {
+          "__rl": true,
+          "value": "YOUR_APIFY_ACTOR_ID",
+          "mode": "list",
+          "cachedResultName": "LinkedIn Post Comments Scraper"
+        },
+        "customBody": "{\n  \"posts\": [\n    \"YOUR_LINKEDIN_POST_URL\"\n  ],\n  \"maxItems\": 100,\n  \"postedLimit\": \"any\"\n}",
+        "authentication": "apifyOAuth2Api"
+      },
+      "id": "953eb11a-7572-49f2-aa65-eb5a707d2cb7",
+      "name": "Run LinkedIn Comments Actor",
+      "type": "@apify/n8n-nodes-apify.apify",
+      "typeVersion": 1,
+      "position": [384, 688]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Transform Apify data to Clay format\nconst apifyData = $input.all();\nconst clayRecords = [];\n\nfor (const item of apifyData) {\n  const data = item.json;\n  \n  // Transform each comment to Clay format\n  if (data.actor) {\n    clayRecords.push({\n      // Person Information\n      firstName: data.actor.name ? data.actor.name.split(' ')[0] : '',\n      lastName: data.actor.name ? data.actor.name.split(' ').slice(1).join(' ') : '',\n      fullName: data.actor.name || '',\n      title: data.actor.position || '',\n      linkedinUrl: data.actor.linkedinUrl || '',\n      profilePictureUrl: data.actor.pictureUrl || '',\n      \n      // Engagement Information\n      engagementType: data.commentary ? 'comment' : 'reaction',\n      commentText: data.commentary || '',\n      reactionType: data.reactionTypeCounts && data.reactionTypeCounts[0] ? data.reactionTypeCounts[0].type : '',\n      \n      // Post Information\n      postId: data.postId || '',\n      postUrl: data.linkedinUrl || '',\n      \n      // Metadata\n      numReplies: data.numComments || 0,\n      numLikes: data.reactionTypeCounts ? data.reactionTypeCounts.reduce((sum, r) => sum + r.count, 0) : 0,\n      scrapedAt: new Date().toISOString(),\n      commentCreatedAt: data.createdAt || '',\n      \n      // Source\n      source: 'LinkedIn Post Comments',\n      sourceActor: 'harvestapi/linkedin-post-comments'\n    });\n  }\n}\n\nreturn clayRecords.map(record => ({ json: record }));",
+        "continueOnFail": true
+      },
+      "id": "d3110eeb-4479-4bb8-b437-86147dde4ae9",
+      "name": "Transform for Clay",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, 704]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "YOUR_CLAY_WEBHOOK_URL",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ data: [$json] }) }}",
+        "options": {}
+      },
+      "id": "f33136bc-0e0a-462f-b347-3d1ce2c0e38e",
+      "name": "Send to Clay Webhook",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [832, 704]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [[{ "node": "Run LinkedIn Comments Actor", "type": "main", "index": 0 }]]
+    },
+    "Run LinkedIn Comments Actor": {
+      "main": [[{ "node": "Transform for Clay", "type": "main", "index": 0 }]]
+    },
+    "Transform for Clay": {
+      "main": [[{ "node": "Send to Clay Webhook", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
