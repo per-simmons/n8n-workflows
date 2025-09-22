@@ -15,6 +15,9 @@ Super simple but super useful. Takes videos from Google Drive and transcribes th
 ### 🔍 [AI-Powered SEO Keyword Research](AI-Powered%20SEO%20Keyword%20Research%20Automation/README.md)
 This is the big one. It does all the keyword research grunt work - finds related keywords, checks search volumes, analyzes competitors, the whole deal. Uses OpenAI and DataForSEO together to get really solid data.
 
+### 📊 [Monday.com Lead Enrichment](Monday.com%20Lead%20Enrichment/README.md)
+Automatically enriches Monday.com leads with company data and generates personalized outreach. When a new lead hits your board, it uses Explorium MCP to research the company, identifies AI automation opportunities, and drafts a personalized email. Saves the draft to Gmail and updates Monday.com with all the insights.
+
 ---
 
 ## License
