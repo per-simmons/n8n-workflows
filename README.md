@@ -18,6 +18,15 @@ This is the big one. It does all the keyword research grunt work - finds related
 ### 📊 [Monday.com Lead Enrichment](Monday.com%20Lead%20Enrichment/README.md)
 Automatically enriches Monday.com leads with company data and generates personalized outreach. When a new lead hits your board, it uses Explorium MCP to research the company, identifies AI automation opportunities, and drafts a personalized email. Saves the draft to Gmail and updates Monday.com with all the insights.
 
+### 🎬 [AI Video Generator with Google Veo3](AI%20Video%20Generator%20with%20Google%20Veo3/README.md)
+Creates viral video content at scale using Google Veo3 AI. Generates creative concepts, produces hyper-realistic videos, and automatically distributes them across 9 social media platforms. Built for content creators who want to automate their entire video production pipeline from ideation to publishing.
+
+### 🏢 [LinkedIn Lead Enrichment Data Lakehouse](LinkedIn%20Lead%20Enrichment%20Data%20Lakehouse/README.md)
+Complete lead enrichment pipeline from LinkedIn engagement through Clay's data platform to personalized outreach. Scrapes LinkedIn interactions, enriches with company data, scores leads with AI, and routes to targeted email campaigns. Perfect for B2B companies targeting data-savvy prospects.
+
+### 💬 [LinkedIn Commenter Sales Enrichment](LinkedIn%20Commenter%20Sales%20Enrichment/README.md)
+Transforms LinkedIn post engagement into qualified sales leads. Extracts commenter data from your thought leadership posts and enriches it through Clay's platform. Converts social engagement into sales conversations by targeting people who are already engaged with your content.
+
 ---
 
 ## License
