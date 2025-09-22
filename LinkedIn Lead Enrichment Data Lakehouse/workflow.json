@@ -1,0 +1,149 @@
+{
+  "name": "AI Data Lakehouse Lead Pipeline",
+  "nodes": [
+    {
+      "id": "schedule_trigger",
+      "name": "Daily 9AM Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "parameters": {
+        "rule": {
+          "cronExpression": "0 9 * * *"
+        }
+      }
+    },
+    {
+      "id": "phantombuster_launch",
+      "name": "Launch LinkedIn Scraper",
+      "type": "n8n-nodes-base.phantombuster",
+      "typeVersion": 1,
+      "position": [450, 300],
+      "parameters": {
+        "resource": "agent",
+        "operation": "launch",
+        "agentId": "={{$vars.PHANTOMBUSTER_AGENT_ID}}",
+        "arguments": {
+          "searchUrl": "https://www.linkedin.com/sales/search/people?query=(filters:List[(type:COMPANY_FOLLOWERS,values:List[(id:1441,selectionType:INCLUDED)])])",
+          "numberOfResultsPerSearch": 100
+        }
+      }
+    },
+    {
+      "id": "wait_5min",
+      "name": "Wait for Scraping",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [650, 300],
+      "parameters": {
+        "amount": 5,
+        "unit": "minutes"
+      }
+    },
+    {
+      "id": "send_to_clay",
+      "name": "Send to Clay Enrichment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1050, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "={{$vars.CLAY_WEBHOOK_URL}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "leads",
+              "value": "={{$json}}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "openai_grader",
+      "name": "Grade Lead with AI",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [450, 500],
+      "parameters": {
+        "resource": "chat",
+        "operation": "complete",
+        "modelId": "gpt-4",
+        "prompt": {
+          "messages": [
+            {
+              "role": "system",
+              "content": "You are a lead scoring expert for an AI-native data lakehouse company. Score leads based on:\n- Title/Seniority (Director+ = 30pts, Manager = 20pts, IC = 10pts)\n- Company Size (>500 employees = 20pts, 100-500 = 15pts, <100 = 5pts)\n- Tech Stack Match (Uses competitor = 30pts, Cloud-native = 20pts, Legacy = 5pts)\n- Revenue (>$50M = 20pts, $10-50M = 15pts, <$10M = 5pts)\n\nReturn JSON: {\"score\": 0-100, \"grade\": \"Gold/Silver/Bronze\", \"reasoning\": \"brief explanation\"}"
+            },
+            {
+              "role": "user",
+              "content": "Score this lead:\nName: {{$json.firstName}} {{$json.lastName}}\nTitle: {{$json.title}}\nCompany: {{$json.companyName}}\nEmployees: {{$json.employeeCount}}\nRevenue: {{$json.revenue}}\nTech Stack: {{$json.techStack}}"
+            }
+          ]
+        },
+        "maxTokens": 200,
+        "temperature": 0.3
+      }
+    }
+  ],
+  "connections": {
+    "schedule_trigger": {
+      "main": [
+        [
+          {
+            "node": "phantombuster_launch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "phantombuster_launch": {
+      "main": [
+        [
+          {
+            "node": "wait_5min",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "wait_5min": {
+      "main": [
+        [
+          {
+            "node": "send_to_clay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "send_to_clay": {
+      "main": [
+        [
+          {
+            "node": "openai_grader",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}
