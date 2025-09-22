@@ -1,0 +1,180 @@
+{
+  "name": "Enrich Monday.com Leads & Draft Personalized Emails",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "monday-lead-webhook",
+        "options": {}
+      },
+      "id": "webhook_trigger",
+      "name": "Monday.com Lead Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "content": "## Company Research Agent\n\nUse Explorium MCP to research the company:\n- Company overview and industry\n- Recent news and developments\n- Business priorities and pain points\n- Technology stack\n- Growth indicators",
+        "model": "gpt-4o",
+        "temperature": 0.3
+      },
+      "id": "company_researcher",
+      "name": "Company Researcher Agent",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "content": "## AI Opportunity Identifier\n\nAnalyze the company data to identify:\n- Specific AI automation use cases\n- Workflow optimization opportunities\n- Integration possibilities\n- ROI potential",
+        "model": "gpt-4o",
+        "temperature": 0.5
+      },
+      "id": "ai_opportunity",
+      "name": "AI Opportunity Identifier",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "content": "## Email Writer Agent\n\nCraft a personalized email (under 120 words):\n- Reference specific company pain point\n- Propose tailored AI solution\n- Include relevant case study mention\n- Clear CTA for discovery call",
+        "model": "gpt-4o",
+        "temperature": 0.7
+      },
+      "id": "email_writer",
+      "name": "Email Writer Agent",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "operation": "createDraft",
+        "to": "={{$json[\"lead_email\"]}}",
+        "subject": "Quick thought on {{$json[\"company_name\"]}}'s {{$json[\"identified_opportunity\"]}}",
+        "message": "={{$json[\"personalized_email\"]}}",
+        "options": {}
+      },
+      "id": "gmail_draft",
+      "name": "Save to Gmail Drafts",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [1050, 200]
+    },
+    {
+      "parameters": {
+        "resource": "boardItem",
+        "operation": "update",
+        "boardId": "={{$json[\"board_id\"]}}",
+        "itemId": "={{$json[\"item_id\"]}}",
+        "columnValues": {
+          "company_insights": "={{$json[\"company_research\"]}}",
+          "ai_opportunities": "={{$json[\"identified_opportunities\"]}}",
+          "email_draft": "={{$json[\"personalized_email\"]}}",
+          "enrichment_status": "Complete",
+          "enrichment_date": "={{$now.format('YYYY-MM-DD')}}"
+        }
+      },
+      "id": "monday_update",
+      "name": "Update Monday.com",
+      "type": "n8n-nodes-base.mondayCom",
+      "typeVersion": 1,
+      "position": [1050, 400]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Transform and structure the enriched data\nconst leadData = items[0].json;\n\nreturn [{\n  json: {\n    lead_email: leadData.email,\n    company_name: leadData.company,\n    board_id: leadData.board_id,\n    item_id: leadData.item_id,\n    company_research: leadData.research_output,\n    identified_opportunities: leadData.ai_opportunities,\n    personalized_email: leadData.email_content,\n    identified_opportunity: leadData.primary_opportunity\n  }\n}];"
+      },
+      "id": "data_transformer",
+      "name": "Transform Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [850, 400]
+    }
+  ],
+  "connections": {
+    "Monday.com Lead Webhook": {
+      "main": [
+        [
+          {
+            "node": "Company Researcher Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Company Researcher Agent": {
+      "main": [
+        [
+          {
+            "node": "AI Opportunity Identifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Opportunity Identifier": {
+      "main": [
+        [
+          {
+            "node": "Email Writer Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Writer Agent": {
+      "main": [
+        [
+          {
+            "node": "Transform Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Data": {
+      "main": [
+        [
+          {
+            "node": "Save to Gmail Drafts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Update Monday.com",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "saveDataSuccessExecution": "all"
+  },
+  "active": false,
+  "tags": [
+    {
+      "name": "CRM",
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "name": "Lead Enrichment",
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    },
+    {
+      "name": "AI Automation",
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    }
+  ]
+}
