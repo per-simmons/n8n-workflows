@@ -1,0 +1,472 @@
+{
+  "name": "whatsapp customer service agent",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.finalPrompt }}\n\n\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are [Company]'s support assistant for Black Ball Sporting Club.\n• Do NOT include any preamble such as "Based on the document you provided" or "Okay, [Name]." Just jump straight to the answer.\n* don't ever start your response with\"based on the document you provided\" , or \"According to the document\", don't mention any documents at all , also don't mention today's date unless you asked\n"
+        }
+      },
+      "id": "d7c9e17b-8a9f-412f-857f-e29e7143937f",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "maxTries": 5,
+      "position": [
+        1152,
+        336
+      ],
+      "retryOnFail": false,
+      "typeVersion": 1.7,
+      "alwaysOutputData": true,
+      "waitBetweenTries": null
+    },
+    {
+      "parameters": {
+        "jsCode": "// cleanAnswer – run once per item\nlet txt = $('AI Agent').first().json.output || '';\n\n// 1. Remove bold / italic / strike markers\ntxt = txt.replace(/[*_~]+/g, '');\n\n// 2. Convert [Texto](https://url) → Texto https://url\ntxt = txt.replace(/\\[([^\\]]+)\\]\\((https?:\\/\\/[^\\s)]+)\\)/g, '$1 $2');\n\n// 3. Collapse 3+ blank lines\ntxt = txt.replace(/\\n{3,}/g, '\\n\\n').trim();\n\n// 4. Remove the unwanted source-reference preamble\ntxt = txt.replace(/^.*?based on the document you provided[,:]?\\s*/i, '');\n\nreturn [{ json: { answer: txt } }];\n"
+      },
+      "id": "ea9cc890-947a-405b-9ecf-a9925292eaf0",
+      "name": "cleanAnswer",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        2416,
+        240
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "jsCode": "// within24h?  – run once per item\n// Meta (WhatsApp) timestamp arrives as seconds since epoch\nconst lastTs = Number($('when message received').first().json.messages[0].timestamp) * 1000;   // → ms\nconst withinWindow = Date.now() - lastTs < 24 * 60 * 60 * 1000;\n\nreturn [{ json: { withinWindow, answer: $json.answer, userId: $json.userId } }];"
+      },
+      "id": "ff061e6e-b950-4136-9412-19ca0de44c5d",
+      "name": "24-hour window check",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1984,
+        336
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "d33e218e-a49a-49ed-9c6b-55b9ea0b0dbb",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ $json.withinWindow }}",
+              "rightValue": ""
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7926e84f-8dc3-4eee-a176-5e415df7bbba",
+      "name": "If",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        2192,
+        336
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "phoneNumberId": "641448739058783",
+        "recipientPhoneNumber": "={{ $('when message received').item.json.contacts[0].wa_id }}",
+        "template": "hello_world|en_US"
+      },
+      "id": "1442c6db-b421-4df1-b4ea-2ab25b621256",
+      "name": "Send Pre-approved Template Message to Reopen the Conversation",
+      "type": "n8n-nodes-base.whatsApp",
+      "position": [
+        2416,
+        432
+      ],
+      "webhookId": "ef6de86f-66df-4586-bd75-2056626d5474",
+      "typeVersion": 1,
+      "credentials": {
+        "whatsAppApi": {
+          "id": "LcKOIqPaxjnOoHvd",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "=641448739058783",
+        "recipientPhoneNumber": "={{ $('when message received').item.json.contacts[0].wa_id }}",
+        "textBody": "={{ $json.answer }}",
+        "additionalFields": {}
+      },
+      "id": "352e2892-d758-4d3b-9f5f-33bdbec923f7",
+      "name": "Send AI Agent's Answer",
+      "type": "n8n-nodes-base.whatsApp",
+      "position": [
+        2640,
+        240
+      ],
+      "webhookId": "8da6eeda-31ec-448a-9d75-2d5dbc5f10f9",
+      "typeVersion": 1,
+      "credentials": {
+        "whatsAppApi": {
+          "id": "LcKOIqPaxjnOoHvd",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "id": "98716188-e3d8-4244-90cb-c8d9ccbef5ff",
+      "name": "when message received",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "position": [
+        480,
+        352
+      ],
+      "webhookId": "6b645b70-61db-4d4d-af47-2f39295cf196",
+      "typeVersion": 1,
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "n90OJCHE7e9hxJZ9",
+          "name": "WhatsApp OAuth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "instructions": "Write code to:\n• Get today's date formatted "Month Day, Year"\n• Extract the Google Doc's plain text by joining its body.content textRuns\n• Extract the WhatsApp message from messages[0].text.body\n• Build a field finalPrompt exactly as:\n\nvbnet\nCopy\nEdit\nToday's date is: [date]\n\n[doc text]\n\nUser's question:\n[body]\n• Return finalPrompt only.",
+        "codeGeneratedForPrompt": "Write code to:\n• Get today's date formatted "Month Day, Year"\n• Extract the Google Doc's plain text by joining its body.content textRuns\n• Extract the WhatsApp message from messages[0].text.body\n• Build a field finalPrompt exactly as:\n\nvbnet\nCopy\nEdit\nToday's date is: [date]\n\n[doc text]\n\nUser's question:\n[body]\n• Return finalPrompt only.",
+        "jsCode": "const googleDocs = $input.all().map((item) => item.json);\nconst whatsappMessages = $(\"when message received\")\n  .all()\n  .map((item) => item.json);\n\nconst date = new Date();\nconst formattedDate = `${date.getMonth() + 1} ${date.getDate()}, ${date.getFullYear()}`;\n\nconst docText = googleDocs[0].content.split(\"\\n\").join(\" \");\n\nconst body = whatsappMessages[0].messages[0].text.body;\n\nconst finalPrompt = `Today's date is: ${formattedDate}\\n\\n${docText}\\n\\nUser's question:\\n${body}`;\n\nreturn { finalPrompt };\n"
+      },
+      "id": "6721cdc2-6332-4cd3-ad4f-df2ad5f4b6a0",
+      "name": "Prepare Prompt",
+      "type": "n8n-nodes-base.aiTransform",
+      "position": [
+        944,
+        336
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "1Ub8QIhGPOm1G4ylaM48iMAous1zvBO3YDl-38AKDuFw",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ub8QIhGPOm1G4ylaM48iMAous1zvBO3YDl-38AKDuFw/edit?usp=drivesdk",
+          "cachedResultName": "Chat Logs"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gid=0",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Ub8QIhGPOm1G4ylaM48iMAous1zvBO3YDl-38AKDuFw/edit#gid=0",
+          "cachedResultName": "Sheet1"
+        },
+        "columns": {
+          "value": {
+            "User": "={{ $('when message received').item.json.messages[0].from }}",
+            "Message": "={{ $('when message received').item.json.messages[0].text.body }}",
+            "Response": "={{ $('AI Agent').item.json.output }}",
+            "Timestamp": "={{ $json.currentDate }}"
+          },
+          "schema": [
+            {
+              "id": "Timestamp",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "required": false,
+              "displayName": "Timestamp",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "User",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "User",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Message",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "Message",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Response",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "Response",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "Timestamp"
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "24034bb9-1f78-4906-b1fb-41a404e3a0aa",
+      "name": "Google Sheets",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [
+        1760,
+        336
+      ],
+      "typeVersion": 4.6,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uBWMgHCjuEnKW2xL",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "55ad77b9-f2e7-496a-bf16-be55c5352f56",
+      "name": "Date & Time",
+      "type": "n8n-nodes-base.dateTime",
+      "position": [
+        1536,
+        336
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "documentURL": "=1Uv1WYCcXNlp-jaeJ7-3MNxWYfPj-wcYnJv4_colXSvk"
+      },
+      "id": "ed40c924-85f3-4876-83b0-dffdce7cf1ae",
+      "name": "company's knowledge",
+      "type": "n8n-nodes-base.googleDocs",
+      "position": [
+        720,
+        336
+      ],
+      "typeVersion": 2,
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "wX4YFfH0y7cZ0cdR",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('when message received').item.json.contacts[0].wa_id }}"
+      },
+      "id": "aaac08b0-524d-427d-b59d-de911679371a",
+      "name": "Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "position": [
+        1216,
+        624
+      ],
+      "typeVersion": 1.3
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "claude-sonnet-4-20250514",
+          "cachedResultName": "Claude 4 Sonnet"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        1008,
+        544
+      ],
+      "id": "eadd679d-343f-4840-9023-247280f9d8d9",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "1psOiPuOZAMpQk9v",
+          "name": "Anthropic account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "If": {
+      "main": [
+        [
+          {
+            "node": "cleanAnswer",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Pre-approved Template Message to Reopen the Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Date & Time",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Date & Time": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cleanAnswer": {
+      "main": [
+        [
+          {
+            "node": "Send AI Agent's Answer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets": {
+      "main": [
+        [
+          {
+            "node": "24-hour window check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Prompt": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "company's knowledge": {
+      "main": [
+        [
+          {
+            "node": "Prepare Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "24-hour window check": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "when message received": {
+      "main": [
+        [
+          {
+            "node": "company's knowledge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e0efbeab-2973-4390-bd32-420b23ced440",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f7a9e284e9628499e96d9c39e1aff62c5bc2e4c9fc130a0336b44a4a83e1d336"
+  },
+  "id": "vOVP72Nr83cpNX8j",
+  "tags": []
+}

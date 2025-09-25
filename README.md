@@ -27,6 +27,9 @@ Complete lead enrichment pipeline from LinkedIn engagement through Clay's data p
 ### 💬 [LinkedIn Commenter Sales Enrichment](LinkedIn%20Commenter%20Sales%20Enrichment/README.md)
 Transforms LinkedIn post engagement into qualified sales leads. Extracts commenter data from your thought leadership posts and enriches it through Clay's platform. Converts social engagement into sales conversations by targeting people who are already engaged with your content.
 
+### 📱 [WhatsApp Customer Service Agent](WhatsApp%20Customer%20Service%20Agent/README.md)
+24/7 AI-powered WhatsApp assistant that answers customer questions using your company's internal knowledge from Google Docs. Handles WhatsApp's messaging windows, logs conversations automatically, and provides contextual responses with date awareness. Perfect for businesses needing instant customer support.
+
 ---
 
 ## License
